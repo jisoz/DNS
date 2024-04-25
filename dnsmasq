@@ -1,0 +1,69 @@
+#- Dnsmasq is a lightweight and versatile DNS forwarder and DHCP server that simplifies network configuration by providing DNS resolution and IP address assignment for devices on a local network. It acts as a local DNS server, allowing devices to easily resolve domain names and efficiently manage IP addresses within a network.
+
+- in odroid we have a default dns service systemd resolve so first we want to disable it
+
+
+sudo systemctl stop systemd-resolved
+sudo systemctl disable systemd-resolved
+
+> we need to delete all content in /etc/resolve.conf because by default dnsmasq read this file
+{.is-warning}
+
+- now install dnsmasq on odroid
+
+```
+sudo apt-get install dnsmasq
+
+```
+- Change /etc/dnsmasq.conf to configure dnsmasq to cache entries for at least 24 hours
+``` the cachesize here.
+cache-size=10000
+
+#if you want to disable negative caching, uncomment this.
+no-negcache
+
+#Normally responses which come from /etc/hosts and the DHCP lease
+ file have Time-To-Live set as zero, which conventionally means
+#do not cache further. If you are happy to trade lower load on the
+ server for potentially stale date, you can set a time-to-live (in
+#seconds) here.
+local-ttl=86400
+```
+
+-To test dig to any domain name in first time it is 3msec in second and third it should be 0 msec (cached)
+
+```
+dig +noall +stats gitlab.bluemint.ai
+
+;; Query time: 3 msec
+
+;; SERVER: ::1#53(::1)
+
+;; WHEN: Fri Nov 03 09:07:10 EET 2023
+
+;; MSG SIZE  rcvd: 47
+
+
+
+odroid@brt2:~$ dig +noall +stats gitlab.bluemint.ai
+
+;; Query time: 0 msec
+
+;; SERVER: ::1#53(::1)
+
+;; WHEN: Fri Nov 03 09:07:15 EET 2023
+
+;; MSG SIZE  rcvd: 47
+
+
+
+odroid@brt2:~$ dig +noall +stats gitlab.bluemint.ai
+
+;; Query time: 0 msec
+
+;; SERVER: ::1#53(::1)
+
+;; WHEN: Fri Nov 03 09:07:19 EET 2023
+
+;; MSG SIZE  rcvd: 47
+```
